@@ -27,12 +27,12 @@ if ! grep -q 'TPOT_TYPE=HIVE' "$HOME/tpotce/.env";
 fi
 
 # Check if running on a supported distribution
-mySUPPORTED_DISTRIBUTIONS=("AlmaLinux" "Debian GNU/Linux" "Fedora Linux" "openSUSE Tumbleweed" "Raspbian GNU/Linux" "Rocky Linux" "Ubuntu")
+mySUPPORTED_DISTRIBUTIONS=("AlmaLinux" "Debian GNU/Linux" "Fedora Linux" "Kali GNU/Linux" "openSUSE Tumbleweed" "Raspbian GNU/Linux" "Rocky Linux" "Ubuntu")
 myCURRENT_DISTRIBUTION=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
 
 if [[ ! " ${mySUPPORTED_DISTRIBUTIONS[@]} " =~ " ${myCURRENT_DISTRIBUTION} " ]];
   then
-    echo "# Only the following distributions are supported: AlmaLinux, Fedora, Debian, openSUSE Tumbleweed, Rocky Linux and Ubuntu."
+    echo "# Only the following distributions are supported: AlmaLinux, Fedora, Debian, Kali Linux, openSUSE Tumbleweed, Rocky Linux and Ubuntu."
     echo
     exit 1
 fi
@@ -151,3 +151,9 @@ fi
 
 unset myTPOT_HIVE_USER
 unset myTPOT_HIVE_IP
+
+echo "deb [arch=amd64] https://download.docker.com/linux/debian gpg" > /etc/apt/sources.list.d/docker.list
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io
+systemctl start docker
+systemctl enable docker

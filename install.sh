@@ -124,12 +124,12 @@ if [ ${EUID} -eq 0 ];
 fi
 
 # Check if running on a supported distribution
-mySUPPORTED_DISTRIBUTIONS=("AlmaLinux" "Debian GNU/Linux" "Fedora Linux" "openSUSE Tumbleweed" "Raspbian GNU/Linux" "Red Hat Enterprise Linux" "Rocky Linux" "Ubuntu")
+mySUPPORTED_DISTRIBUTIONS=("AlmaLinux" "Debian GNU/Linux" "Fedora Linux" "Kali GNU/Linux" "openSUSE Tumbleweed" "Raspbian GNU/Linux" "Red Hat Enterprise Linux" "Rocky Linux" "Ubuntu")
 myCURRENT_DISTRIBUTION=$(awk -F= '/^NAME/{print $2}' /etc/os-release | tr -d '"')
 
 if [[ ! " ${mySUPPORTED_DISTRIBUTIONS[@]} " =~ " ${myCURRENT_DISTRIBUTION} " ]];
   then
-    echo "### Only the following distributions are supported: AlmaLinux, Fedora, Debian, openSUSE Tumbleweed, RHEL, Rocky Linux and Ubuntu."
+    echo "### Only the following distributions are supported: AlmaLinux, Fedora, Debian, Kali Linux, openSUSE Tumbleweed, RHEL, Rocky Linux and Ubuntu."
     echo "### Please follow the T-Pot documentation on how to run T-Pot on macOS, Windows and other currently unsupported platforms."
     echo
     exit 1
@@ -162,7 +162,7 @@ case ${myCURRENT_DISTRIBUTION} in
     echo
     sudo dnf -y --refresh install ${myPACKAGES_FEDORA}
     ;;
-  "Debian GNU/Linux"|"Raspbian GNU/Linux"|"Ubuntu")
+  "Debian GNU/Linux"|"Kali GNU/Linux"|"Raspbian GNU/Linux"|"Ubuntu")
     echo
     echo ${myINSTALL_NOTIFICATION}
     echo
@@ -220,12 +220,14 @@ esac
 echo
 
 # Define tag for Ansible
-myANSIBLE_DISTRIBUTIONS=("Fedora Linux" "Debian GNU/Linux" "Raspbian GNU/Linux" "Rocky Linux" "Red Hat Enterprise Linux")
+myANSIBLE_DISTRIBUTIONS=("Fedora Linux" "Debian GNU/Linux" "Kali GNU/Linux" "Raspbian GNU/Linux" "Rocky Linux" "Red Hat Enterprise Linux")
 if [[ "${myANSIBLE_DISTRIBUTIONS[@]}" =~ "${myCURRENT_DISTRIBUTION}" ]];
   then
     # special case AGAIN, /etc/os-release doesn't match Ansible's tagging conventions
     if [[ "${myCURRENT_DISTRIBUTION}" == "Red Hat Enterprise Linux" ]]; then
       myANSIBLE_TAG="RedHat"
+    elif [[ "${myCURRENT_DISTRIBUTION}" == "Kali GNU/Linux" ]]; then
+      myANSIBLE_TAG="Kali"
     else
       myANSIBLE_TAG=$(echo ${myCURRENT_DISTRIBUTION} | cut -d " " -f 1)
     fi
@@ -251,8 +253,8 @@ if [ ! -f installer/install/tpot.yml ] && [ ! -f tpot.yml ];
 fi
 
 # Check type of sudo access
-if [ "$myANSIBLE_TAG" = "Debian" ];
-  # Debian 13 - sudo seems to apply stricter settings, we now ask for the become password
+if [[ "$myANSIBLE_TAG" = "Debian" ]] || [[ "$myANSIBLE_TAG" = "Kali" ]];
+  # Debian 13 and Kali - sudo seems to apply stricter settings, we now ask for the become password
   then
   	myANSIBLE_BECOME_OPTION="--become --ask-become-pass"
   else

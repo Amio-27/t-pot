@@ -16,7 +16,9 @@
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
+        - "Kali"
         - "openSUSE Tumbleweed"
         - "Raspbian"
         - "RedHat"
@@ -29,20 +31,24 @@
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
+        - "Kali"
         - "openSUSE Tumbleweed"
         - "Raspbian"
         - "RedHat"
         - "Rocky"
         - "Ubuntu"
 
-    - name: Add python package (Debian, Raspbian, Ubuntu)
+    - name: Add python package (Debian, Kali, Raspbian, Ubuntu)
       raw: |
         apt update
         apt -y install python3
-      when: my_distribution.stdout | trim in ["Debian", "Raspbian", "Ubuntu"] and my_python3.stdout | trim == ""
+      when: my_distribution.stdout | trim in ["Debian", "Kali", "Raspbian", "Ubuntu"] and my_python3.stdout | trim == ""
       tags:
         - "Debian"
+        - "Kali"
+        - "Kali"
         - "Raspbian"
         - "Ubuntu"
 
@@ -76,6 +82,7 @@
     - "AlmaLinux"
     - "Debian"
     - "Fedora"
+    - "Kali"
     - "openSUSE Tumbleweed"
     - "Raspbian"
     - "RedHat"
@@ -97,7 +104,7 @@
 
     - name: Check if supported distribution (All)
       assert:
-        that: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+        that: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
         fail_msg: "T-Pot is not supported on this platform: {{ ansible_distribution }}."
         success_msg: "T-Pot will now install on {{ ansible_distribution }}."
 
@@ -113,19 +120,21 @@
   tasks:
     - name: Syncing clocks (All)
       shell: "hwclock --hctosys"
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       ignore_errors: true
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
+        - "Kali"
         - "openSUSE Tumbleweed"
         - "Raspbian"
         - "RedHat"
         - "Rocky"
         - "Ubuntu"
 
-    - name: Install recommended packages (Debian, Raspbian, Ubuntu)
+    - name: Install recommended packages (Debian, Kali, Raspbian, Ubuntu)
       package:
         name:
           - apache2-utils
@@ -144,9 +153,11 @@
           - wget
         state: latest
         update_cache: yes
-      when: ansible_distribution in ["Debian", "Raspbian", "Ubuntu"]
+      when: ansible_distribution in ["Debian", "Kali", "Raspbian", "Ubuntu"]
       tags:
         - "Debian"
+        - "Kali"
+        - "Kali"
         - "Raspbian"
         - "Ubuntu"
 
@@ -273,10 +284,11 @@
           - podman
         state: absent
         update_cache: yes
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "Raspbian"
         - "RedHat"
@@ -288,20 +300,22 @@
         path: /etc/apt/keyrings
         state: directory
         mode: 0755
-      when: ansible_distribution in ["Debian", "Raspbian", "Ubuntu"]
+      when: ansible_distribution in ["Debian", "Kali", "Raspbian", "Ubuntu"]
       tags:
         - "Debian"
+        - "Kali"
         - "Raspbian"
         - "Ubuntu"
 
     - name: Download Docker Engine GPG key (Debian, Raspbian, Ubuntu)
       get_url:
-        url: https://download.docker.com/linux/{{ ansible_distribution | lower }}/gpg
+        url: https://download.docker.com/linux/{{ 'debian' if ansible_distribution == 'Kali' else ansible_distribution | lower }}/gpg
         dest: /etc/apt/keyrings/docker
         mode: 0755
-      when: ansible_distribution in ["Debian", "Raspbian", "Ubuntu"]
+      when: ansible_distribution in ["Debian", "Kali", "Raspbian", "Ubuntu"]
       tags:
         - "Debian"
+        - "Kali"
         - "Raspbian"
         - "Ubuntu"
 
@@ -309,21 +323,23 @@
       shell: gpg --dearmor /etc/apt/keyrings/docker
       args:
         creates: /etc/apt/keyrings/docker.gpg
-      when: ansible_distribution in ["Debian", "Raspbian", "Ubuntu"]
+      when: ansible_distribution in ["Debian", "Kali", "Raspbian", "Ubuntu"]
       tags:
         - "Debian"
+        - "Kali"
         - "Raspbian"
         - "Ubuntu"
 
     - name: Add Docker Engine repository (Debian, Raspbian, Ubuntu)
       apt_repository:
         filename: docker
-        repo: "deb [arch={{ ansible_architecture | replace('aarch64', 'arm64') | replace('x86_64', 'amd64') }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ ansible_architecture | replace('aarch64', 'arm64') | replace('x86_64', 'amd64') }} signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/{{ 'debian' if ansible_distribution == 'Kali' else ansible_distribution | lower }} {{ 'bookworm' if ansible_distribution == 'Kali' else ansible_distribution_release }} stable"
         state: present
         update_cache: yes
-      when: ansible_distribution in ["Debian", "Raspbian", "Ubuntu"]
+      when: ansible_distribution in ["Debian", "Kali", "Raspbian", "Ubuntu"]
       tags:
         - "Debian"
+        - "Kali"
         - "Raspbian"
         - "Ubuntu"
 
@@ -395,10 +411,11 @@
           - docker-compose-plugin 
         state: latest
         update_cache: yes
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "Raspbian"
         - "RedHat"
@@ -410,10 +427,11 @@
         name: docker
         state: stopped
         enabled: false
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -436,10 +454,11 @@
         name: tpot
         gid: 2000
         state: present
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -455,10 +474,11 @@
         shell: /bin/false
         home: /nonexistent
         group: tpot
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -472,10 +492,11 @@
         line: "vm.max_map_count=262144"
         state: present
         create: yes
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -505,10 +526,11 @@
         path: /etc/ssh/sshd_config
         regexp: '^(Port (?!64295$)[0-9]+)'
         replace: '# \1'
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -521,10 +543,11 @@
         path: /etc/ssh/sshd_config
         line: "Port 64295"
         insertafter: EOF
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "Raspbian"
         - "RedHat"
@@ -707,10 +730,11 @@
         name: docker
         state: restarted
         enabled: true
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -723,10 +747,11 @@
         name: "{{ 'ssh' if ansible_distribution in ['Ubuntu'] else 'sshd' }}"
         state: restarted
         enabled: true
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -756,7 +781,7 @@
     - name: Check for non-root user id (All)
       debug:
         msg: "Detected user: '{{ ansible_user_id }}'"
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       failed_when: ansible_user_id == "root"
 
     - name: Add aliases
@@ -770,10 +795,11 @@
         marker: "# {mark} ANSIBLE MANAGED BLOCK"
         insertafter: EOF
         state: present
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
       tags:
         - "AlmaLinux"
         - "Debian"
+        - "Kali"
         - "Fedora"
         - "openSUSE Tumbleweed"
         - "Raspbian"
@@ -788,7 +814,7 @@
         version: master
         clone: yes
         update: no
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
 
     - name: Add current user to Docker, T-Pot group (All)
       become: true
@@ -798,7 +824,7 @@
           - docker
           - tpot
         append: yes
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
 
 ########################################
 # T-Pot - Install service and cron job #
@@ -828,7 +854,7 @@
         group: root
         mode: '0755'
       notify: Reload systemd and enable service
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
 
   handlers:
     - name: Reload systemd and enable service
@@ -838,7 +864,7 @@
         daemon_reload: yes
         state: stopped
         enabled: yes
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
 
 - name: T-Pot - Setup a randomized daily reboot
   hosts: all
@@ -867,4 +893,4 @@
         hour: "{{ random_hour }}"
         job: "bash -c 'systemctl stop tpot.service && docker container prune -f; docker image prune -f; docker volume prune -f; /usr/sbin/shutdown -r +1 \"T-Pot Daily Reboot\"'"
         state: present
-      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
+      when: ansible_distribution in ["AlmaLinux", "Debian", "Fedora", "Kali", "openSUSE Tumbleweed", "Raspbian", "RedHat", "Rocky", "Ubuntu"]
