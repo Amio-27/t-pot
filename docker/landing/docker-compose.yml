@@ -1,0 +1,17 @@
+version: "3"
+
+services:
+  landing:
+    build: .
+    container_name: tpot_landing
+    restart: unless-stopped
+    networks:
+      - tpot
+    ports:
+      - "8080:80"
+    labels:
+      - "com.tpot.service=landing"
+
+networks:
+  tpot:
+    external: true
